@@ -23,7 +23,7 @@ pipeline {
     stages {
 
         stage('Building Source Code') {
-            stages {
+            // stages {
                 agent { label 'Node.Build' }
 
                 stage('Versioning') {
@@ -40,18 +40,18 @@ pipeline {
                         sh "make build"
                     }
                 }
-            }
+            // }
         }
 
 
-        stage('Automated Test') {
-            stages {
-                agent { label 'Node.AutomatedTest' }
+        // stage('Automated Test') {
+        //     stages {
+        //         agent { label 'Node.AutomatedTest' }
 
-                stage('Executing') {
-                    sh "make test"
-                }
-            }
-        }
+        //         stage('Executing') {
+        //             sh "make test"
+        //         }
+        //     }
+        // }
     }
 }
