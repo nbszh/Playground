@@ -1,14 +1,7 @@
 def jknjob_versions = [release:"", rcp: '0.0.0.snapshot', rtlib:'0.0.0.snapshot']
 
-
 pipeline {
     agent none
-
-    parameters {
-        booleanParam(name: 'RELEASE_PACKAGES', defaultValue: false, description: 'Whether creating packages for release?')
-        choice(name: 'AUTOMATED_TEST', choices: ['None', 'Sanity', 'Full'], defaultValue: 'None', description: 'Which automated test to run?')
-    }
-
 
     environment {
         JKNBUILD_DIST = 'JKNS_DIST'
@@ -21,37 +14,80 @@ pipeline {
 
 
     stages {
+        stage("Building Source Code") {
+            agent {
+                label 'Node.Build'
+            }
 
-        stage('Building Source Code') {
-            // stages {
-                agent { label 'Node.Build' }
-
+            stages {
                 stage('Versioning') {
-                    script {
-                        def versioning_method = load("Example-LoadGroovyScript/scripts/versions.groovy")
-                        jknjob_versions = versioning_method("1", readProperties(file: 'VERSION'))
+                    steps {
+                        script {
+                            def versioning_method = load("Example-LoadGroovyScript/scripts/versions.groovy")
+                            versioning_method.doA()
+                            echo(versioning_method.doB("88"))
+                            jknjob_versions = versioning_method.doVersion(readProperties(file: 'Example-LoadGroovyScript/VERSIONS'))
+                        }
                     }
                 }
 
-
-                stage('Compiling') {
-                    withEnv(["BLD_VERSION=${jknjob_versions.RCP}", "MK_OUTPUTDIR=${env.JKNBUILD_DIST}"
-                            ]) {
-                        sh "make build"
+               stage("build") {
+                    steps {
+                        withEnv(["BLD_VERSION=${jknjob_versions.RCP}", "MK_OUTPUTDIR=${env.JKNBUILD_DIST}"
+                                ]) {
+                            sh "make -C Example-LoadGroovyScript build"
+                        }
                     }
-                }
-            // }
+               }
+
+               stage("test") {
+                   steps {
+                       sh "./test.sh"
+                   }
+               }
+            }
         }
-
-
-        // stage('Automated Test') {
-        //     stages {
-        //         agent { label 'Node.AutomatedTest' }
-
-        //         stage('Executing') {
-        //             sh "make test"
-        //         }
-        //     }
-        // }
     }
 }
+
+
+// pipeline {
+//     agent any
+
+
+
+//     stages {
+
+//         stage('Building Source Code') {
+//             stages {
+//                 agent { label 'Node.Build' }
+
+//                 stage('Versioning') {
+//                     script {
+//                         def versioning_method = load("Example-LoadGroovyScript/scripts/versions.groovy")
+//                         jknjob_versions = versioning_method("1", readProperties(file: 'VERSION'))
+//                     }
+//                 }
+
+
+//                 stage('Compiling') {
+//                     withEnv(["BLD_VERSION=${jknjob_versions.RCP}", "MK_OUTPUTDIR=${env.JKNBUILD_DIST}"
+//                             ]) {
+//                         sh "make build"
+//                     }
+//                 }
+//             }
+//         }
+
+
+//         // stage('Automated Test') {
+//         //     stages {
+//         //         agent { label 'Node.Test' }
+
+//         //         stage('Executing') {
+//         //             sh "make test"
+//         //         }
+//         //     }
+//         // }
+//     }
+// }
